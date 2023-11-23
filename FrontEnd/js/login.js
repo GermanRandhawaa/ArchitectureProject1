@@ -19,7 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (response.ok) {
                 const { token } = await response.json();
                 localStorage.setItem('token', token);
-                window.location.href = 'index.html'; // Redirect to dashboard or another page
+                window.location.href = 'home.html'; // Redirect to dashboard or another page
             } else {
                 console.error('Invalid credentials');
                 // Show an error message to the user or perform any other action
