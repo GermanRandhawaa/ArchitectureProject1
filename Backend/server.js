@@ -17,7 +17,7 @@ app.use(cors());
 app.use(helmet());
 app.use(express.urlencoded({ extended: true }));
 
-// const connection = mysql.createConnection(process.env.DATABASE_URL);
+const connection = mysql.createConnection(process.env.DB_PLANET);
 
 const verifyToken = (req, res, next) => {
   const token = req.cookies.jwt; 
@@ -38,12 +38,12 @@ const verifyToken = (req, res, next) => {
   }
 };
 
-const connection = mysql.createConnection({
-  host: "localhost",
-  user: "root",
-  password: "",
-  database: "archPRoject1",
-});
+// const connection = mysql.createConnection({
+//   host: "localhost",
+//   user: "root",
+//   password: "",
+//   database: "archPRoject1",
+// });
 
 if (connection) {
   console.log("Connected to database");
@@ -107,10 +107,10 @@ app.post("/register", async (req, res) => {
   try {
     const hashedPassword = await bcrypt.hash(password, 10); 
     const insertQuery =
-      "INSERT INTO users (username, email, password) VALUES (?, ?, ?)";
+      "INSERT INTO users (username, email, password, role) VALUES (?, ?, ?, ?)";
     connection.query(
       insertQuery,
-      [username, email, hashedPassword],
+      [username, email, hashedPassword, "hr"],
       (error, results) => {
         if (error) {
           console.error("Error registering user:", error); 
