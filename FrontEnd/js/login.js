@@ -14,14 +14,18 @@ document.addEventListener('DOMContentLoaded', () => {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({ username, password }),
+                credentials: 'include',
             });
 
             if (response.ok) {
-                const { token } = await response.json();
-                localStorage.setItem('token', token);
-                window.location.href = 'home.html'; // Redirect to dashboard or another page
+                const msg = await response.json();
+                if(msg.message === 'Login successful'){
+                    window.location.href = 'home.html';
+                }
+                
             } else {
                 console.error('Invalid credentials');
+                alert('Invalid credentials');
                 // Show an error message to the user or perform any other action
             }
         } catch (error) {

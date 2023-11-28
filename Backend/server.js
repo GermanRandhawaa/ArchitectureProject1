@@ -13,7 +13,10 @@ const secretKey = process.env.SECRET_KEY;
 const app = express();
 
 app.use(express.json());
-app.use(cors());
+app.use(cors({
+  origin: "http://127.0.0.1:5500",
+  credentials: true,
+}));
 app.use(helmet());
 app.use(express.urlencoded({ extended: true }));
 
@@ -61,6 +64,7 @@ app.post("/login", async (req, res) => {
     if (token) {
       try {
         const decoded = jwt.verify(token, secretKey);
+        console.log(decoded);
       } catch (err) {
         console.log(err);
       }
