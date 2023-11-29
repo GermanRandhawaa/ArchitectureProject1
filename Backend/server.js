@@ -20,7 +20,7 @@ app.use(cors({
 app.use(helmet());
 app.use(express.urlencoded({ extended: true }));
 
-const connection = mysql.createConnection(process.env.DB_PLANET);
+const connection = mysql.createConnection(process.env.DATABASE_URL);
 
 const verifyToken = (req, res, next) => {
   const token = req.cookies.jwt; 
@@ -74,6 +74,7 @@ app.post("/login", async (req, res) => {
   } catch (error) {
     console.error("Error:", error);
   }
+  
   const query = "SELECT * FROM users WHERE username = ?";
   connection.query(query, [username], async (error, results) => {
     if (error) {
@@ -81,10 +82,10 @@ app.post("/login", async (req, res) => {
       res.status(500).json({ message: "Error querying database" });
     } else {
       if (results.length > 0) {
-        const hashedPassword = results[0].password;
+        const { password: hashedPassword, role } = results[0];
         const match = await bcrypt.compare(password, hashedPassword);
         if (match) {
-          const token = jwt.sign({ username }, secretKey, {
+          const token = jwt.sign({ username, role }, secretKey, {
             expiresIn: "1h",
           }); 
           res.cookie("jwt", token, {
@@ -92,7 +93,9 @@ app.post("/login", async (req, res) => {
             maxAge: 3600000, // 1 hour
             sameSite: "strict",
           });
-          res.json({ message: "Login successful" });
+
+          // Send the user's role along with the successful login message
+          res.json({ message: "Login successful", role });
         } else {
           res.status(401).json({ message: "Invalid credentials" });
         }
@@ -104,7 +107,6 @@ app.post("/login", async (req, res) => {
 });
 
 
-
 app.post("/register", async (req, res) => {
   const { username, email, password } = req.body;
 
@@ -114,7 +116,7 @@ app.post("/register", async (req, res) => {
       "INSERT INTO users (username, email, password, role) VALUES (?, ?, ?, ?)";
     connection.query(
       insertQuery,
-      [username, email, hashedPassword, "hr"],
+      [username, email, hashedPassword, "user"],
       (error, results) => {
         if (error) {
           console.error("Error registering user:", error); 

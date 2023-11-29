@@ -18,11 +18,14 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             if (response.ok) {
-                const msg = await response.json();
-                if(msg.message === 'Login successful'){
+                const { message, role } = await response.json();
+
+                // Check the role of the user
+                if (role === 'admin') {
+                    window.location.href = 'index.html';
+                } else {
                     window.location.href = 'home.html';
                 }
-                
             } else {
                 console.error('Invalid credentials');
                 alert('Invalid credentials');
