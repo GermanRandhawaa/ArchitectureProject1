@@ -1,9 +1,11 @@
 from flask import Flask, request, jsonify
+from flask_cors import CORS, cross_origin  # Import CORS and cross_origin
 import docx2txt
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
 app = Flask(__name__)
+CORS(app)  # Enable CORS for all routes
 
 def calculate_similarity(job_description, resume):
     content = [resume, job_description]
@@ -12,21 +14,42 @@ def calculate_similarity(job_description, resume):
     similarity_matrix = cosine_similarity(count_matrix)
     return similarity_matrix[1][0].round(2) * 100
 
-@app.route('/upload', methods=['POST'])
-def upload_files():
-    if 'job_description' not in request.files or 'resume' not in request.files:
-        return 'Missing files', 400
+@app.route('/')
+def welcome():
+    welcome_message = "Welcome to the Resume and Job Description Similarity Model!"
+    instructions = """
+    To use this model, send a POST request to /upload with two files:
+    1. 'job_description': A .docx file containing the job description.
+    2. 'resume': A .docx file containing the resume.
+    The model will return the similarity percentage between the job description and the resume.
+    """
+    return welcome_message + instructions
 
-    job_description_file = request.files['job_description']
+@app.route('/upload', methods=['POST'])
+@cross_origin()  # Enable CORS only for this route
+
+def upload_files():
+    if 'resume' not in request.files:
+        return 'Missing resume file', 400
+    
+    job_description_text = request.form.get('job_description', '')
+    if not job_description_text:
+        return 'Job description is required.', 400
+
     resume_file = request.files['resume']
 
-    job_description = docx2txt.process(job_description_file)
-    resume = docx2txt.process(resume_file)
+    if not resume_file.filename.endswith('.docx'):
+        return 'Invalid resume file format. Only .docx files are accepted.', 400
 
-    similarity_score = calculate_similarity(job_description, resume)
-    return jsonify({'similarity': similarity_score})
+    try:
+        resume_text = docx2txt.process(resume_file)
+        similarity_score = calculate_similarity(job_description_text, resume_text)
+        return jsonify({'similarity': similarity_score})
+    except Exception as e:
+        return f'Error processing file: {str(e)}', 500
 
 if __name__ == '__main__':
     app.run(debug=True)
+
 
 
