@@ -11,6 +11,14 @@ const port = process.env.PORT || 3000;
 const secretKey = process.env.SECRET_KEY;
 
 const app = express();
+const fs = require('fs');
+const path = require('path');
+// app.use(express.static(path.join(__dirname, "../Frontend")));
+// app.get("/admin.html", function (req, res) {
+//   res.sendFile(path.join(__dirname, "../Frontend/admin.html"));
+// });
+
+app.use(express.static(__dirname));
 
 app.use(express.json());
 app.use(cors({
@@ -20,6 +28,7 @@ app.use(cors({
 app.use(helmet());
 app.use(express.urlencoded({ extended: true }));
 
+
 const connection = mysql.createConnection(process.env.DATABASE_URL);
 
 const verifyToken = (req, res, next) => {
@@ -27,11 +36,9 @@ const verifyToken = (req, res, next) => {
   if (token) {
     jwt.verify(token, secretKey, (err, decoded) => {
       if (err) {
-        
         res.clearCookie("jwt"); 
         res.redirect("/login"); 
       } else {
-        // Token is valid
         req.user = decoded; 
         next(); 
       }
@@ -57,8 +64,11 @@ app.get("/index", verifyToken, (req, res) => {
 });
 
 
+const userApiCallCounts = {};
+
 app.post("/login", async (req, res) => {
   const { username, password } = req.body;
+
   try {
     const token = req.cookies && req.cookies.jwt;
     if (token) {
@@ -74,28 +84,43 @@ app.post("/login", async (req, res) => {
   } catch (error) {
     console.error("Error:", error);
   }
-  
+
   const query = "SELECT * FROM users WHERE username = ?";
   connection.query(query, [username], async (error, results) => {
     if (error) {
       console.error("Error querying database:", error);
       res.status(500).json({ message: "Error querying database" });
     } else {
+      // Increment the API call count for the specific user
+      userApiCallCounts[username] = (userApiCallCounts[username] || 0) + 1;
+
+      console.log(`${username} API Call Count:`, userApiCallCounts[username]); // Log the API call count
+
       if (results.length > 0) {
         const { password: hashedPassword, role } = results[0];
         const match = await bcrypt.compare(password, hashedPassword);
         if (match) {
-          const token = jwt.sign({ username, role }, secretKey, {
-            expiresIn: "1h",
-          }); 
-          res.cookie("jwt", token, {
-            httpOnly: true,
-            maxAge: 3600000, // 1 hour
-            sameSite: "strict",
-          });
+          // Update the api_calls column in the calls table
+          const updateQuery = "INSERT INTO calls (username, api_calls) VALUES (?, 1) ON DUPLICATE KEY UPDATE api_calls = api_calls + 1";
+          connection.query(updateQuery, [username], (updateError) => {
+            if (updateError) {
+              console.error("Error updating api_calls:", updateError);
+              res.status(500).json({ message: "Error updating api_calls" });
+            } else {
+              const token = jwt.sign({ username, role }, secretKey, {
+                expiresIn: "1h",
+              });
 
-          // Send the user's role along with the successful login message
-          res.json({ message: "Login successful", role });
+              res.cookie("jwt", token, {
+                httpOnly: true,
+                maxAge: 3600000, // 1 hour
+                sameSite: "strict",
+              });
+
+              // Send the user's role along with the successful login message
+              res.json({ message: "Login successful", role, apiCallCount: userApiCallCounts[username] });
+            }
+          });
         } else {
           res.status(401).json({ message: "Invalid credentials" });
         }
@@ -105,6 +130,7 @@ app.post("/login", async (req, res) => {
     }
   });
 });
+
 
 
 app.post("/register", async (req, res) => {
@@ -133,6 +159,7 @@ app.post("/register", async (req, res) => {
     res.status(500).json({ message: "Error registering user" });
   }
 });
+
 
 app.listen(port, () => {
   console.log(`app listening at http://localhost:${port}`);

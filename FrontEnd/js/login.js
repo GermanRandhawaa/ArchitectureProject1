@@ -22,7 +22,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 // Check the role of the user
                 if (role === 'admin') {
-                    window.location.href = 'index.html';
+                    window.location.href = 'admin.html';
                 } else {
                     window.location.href = 'home.html';
                 }
