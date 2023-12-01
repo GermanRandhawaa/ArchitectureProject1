@@ -73,14 +73,28 @@ function sendDataToServer(jobDescription, resumes) {
     .then(response => response.json())
     .then(data => {
         console.log('Success:', data);
-        // You can add additional UI updates here
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        // Handle errors in UI here
-    });
-}
-
+               // UI Update for Success
+               document.getElementById('successMessage').style.display = 'block';
+               document.getElementById('successMessage').textContent = 'Success: The similarity score is ' + data.similarity + '%';
+       
+               // Hide error message in case it was previously shown
+               document.getElementById('errorMessage').style.display = 'none';
+       
+               // You might also want to update other parts of your UI, such as clearing the form or disabling the submit button
+               // document.getElementById('jobApplicationForm').reset();
+           })
+           .catch(error => {
+               console.error('Error:', error);
+       
+               // UI Update for Error
+               document.getElementById('errorMessage').style.display = 'block';
+               document.getElementById('errorMessage').textContent = 'Error: ' + error.message;
+       
+               // Hide success message in case it was previously shown
+               document.getElementById('successMessage').style.display = 'none';
+           });
+       }
+       
 
 function goLogin(){
     const choice = confirm("Are you sure you want to logout?");
