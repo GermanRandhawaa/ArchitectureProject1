@@ -1,5 +1,6 @@
 let resumes = [];
 let resumeResults = [];
+let apiCallCount = 0;
 
 
 function addResume(resume) {
@@ -49,9 +50,16 @@ function submitForm() {
 }
 
 function sendDataToServer(jobDescription, resume) {
+    apiCallCount++; // Increment the counter for each API call
+
+    console.log(`API Call Count: ${apiCallCount}`); // Log the API call count
+
     let formData = new FormData();
+
     formData.append('job_description', jobDescription);
     formData.append('resume', resume);
+
+    
 
     fetch('http://127.0.0.1:5000/upload', {
         method: 'POST',

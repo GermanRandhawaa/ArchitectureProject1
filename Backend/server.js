@@ -131,8 +131,6 @@ app.post("/login", async (req, res) => {
   });
 });
 
-
-
 app.post("/register", async (req, res) => {
   const { username, email, password } = req.body;
 
@@ -159,7 +157,6 @@ app.post("/register", async (req, res) => {
     res.status(500).json({ message: "Error registering user" });
   }
 });
-
 
 app.listen(port, () => {
   console.log(`app listening at http://localhost:${port}`);
