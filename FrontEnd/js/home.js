@@ -61,7 +61,7 @@ function submitForm() {
         sendDataToServer(jobDescription, resume);
     });
 
-    resumes = [];
+    clearInputs();
 }
 
 function sendDataToServer(jobDescription, resume) {
@@ -78,7 +78,7 @@ function sendDataToServer(jobDescription, resume) {
     formData.append('job_description', jobDescription);
     formData.append('resume', resume);
 
-    
+
 
     fetch('http://127.0.0.1:5000/upload', {
         method: 'POST',
@@ -173,22 +173,24 @@ function getResFeedback() {
             method: 'POST',
             body: formData
         })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Network response was not ok ' + response.statusText);
-            }
-            return response.json();
-        })
-        .then(data => {
-            displayFriendlyResumeFeedback(data, resume.name);
-            // Optionally, clear the resumes array if feedback should only be fetched once
-            // resumes = [];
-        })
-        .catch(error => {
-            document.getElementById('errorMessage').style.display = 'block';
-            document.getElementById('errorMessage').textContent = 'Error: ' + error.message;
-        });
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok ' + response.statusText);
+                }
+                return response.json();
+            })
+            .then(data => {
+                displayFriendlyResumeFeedback(data, resume.name);
+                // Optionally, clear the resumes array if feedback should only be fetched once
+                // resumes = [];
+            })
+            .catch(error => {
+                document.getElementById('errorMessage').style.display = 'block';
+                document.getElementById('errorMessage').textContent = 'Error: ' + error.message;
+            });
+
     });
+    clearInputs();
 }
 
 function getJobDesFeedback() {
@@ -208,14 +210,16 @@ function getJobDesFeedback() {
         method: 'POST',
         body: formData
     })
-    .then(response => response.json())
-    .then(data => {
-        displayFriendlyJobDescFeedback(data);
-    })
-    .catch(error => {
-        document.getElementById('errorMessage').style.display = 'block';
-        document.getElementById('errorMessage').textContent = 'Error: ' + error;
-    });
+        .then(response => response.json())
+        .then(data => {
+            displayFriendlyJobDescFeedback(data);
+        })
+        .catch(error => {
+            document.getElementById('errorMessage').style.display = 'block';
+            document.getElementById('errorMessage').textContent = 'Error: ' + error;
+        });
+
+    clearInputs();
 }
 
 function displayFriendlyJobDescFeedback(data) {
@@ -258,6 +262,16 @@ function goLogin() {
     const choice = confirm("Are you sure you want to logout?");
     if (choice) window.location.href = 'Login.html';
 }
+
+function clearInputs() {
+    // Clear the job description textarea
+    document.getElementById('jobDescription').value = '';
+
+    // Clear the added resumes display and the resumes array
+    document.getElementById('addedResumes').innerHTML = '';
+    resumes = [];
+}
+
 
 document.addEventListener('DOMContentLoaded', () => {
     const corporateSecretLink = document.getElementById('corporateSecretLink');
