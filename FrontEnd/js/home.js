@@ -254,7 +254,7 @@ function displayFriendlyResumeFeedback(data, resumeName) {
     }
 
     // Append the result to the results container
-    resultsContainer.innerHTML += `<h3>Resume Feedback:</h3><div class="${className}">${message}</div>`;
+    resultsContainer.innerHTML = `<h3>Resume Feedback:</h3><div class="${className}">${message}</div>`;
 }
 
 
