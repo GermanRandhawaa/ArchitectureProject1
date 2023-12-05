@@ -132,27 +132,36 @@ function getSimilarityColor(similarity) {
 }
 
 function getResFeedback() {
-    // Prepare FormData with resume
-    const formData = new FormData();
-    const resumeFiles = document.getElementById('resume').files;
-    if (resumeFiles.length === 0) {
-        alert('Please upload a resume.');
+    // Check if any resumes have been added
+    if (resumes.length === 0) {
+        alert('Please add at least one resume before getting feedback.');
         return;
     }
-    formData.append('resume', resumeFiles[0]);  // Assuming only one resume
 
-    // Send request to Flask for Resume Feedback
-    fetch('http://127.0.0.1:5000/resume-feedback', {
-        method: 'POST',
-        body: formData
-    })
-    .then(response => response.json())
-    .then(data => {
-        displayFriendlyResumeFeedback(data);
-    })
-    .catch(error => {
-        document.getElementById('errorMessage').style.display = 'block';
-        document.getElementById('errorMessage').textContent = 'Error: ' + error;
+    // Send each resume for feedback
+    resumes.forEach(resume => {
+        const formData = new FormData();
+        formData.append('resume', resume);
+
+        fetch('http://127.0.0.1:5000/resume-feedback', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok ' + response.statusText);
+            }
+            return response.json();
+        })
+        .then(data => {
+            displayFriendlyResumeFeedback(data, resume.name);
+            // Optionally, clear the resumes array if feedback should only be fetched once
+            // resumes = [];
+        })
+        .catch(error => {
+            document.getElementById('errorMessage').style.display = 'block';
+            document.getElementById('errorMessage').textContent = 'Error: ' + error.message;
+        });
     });
 }
 
@@ -203,17 +212,18 @@ function displayFriendlyJobDescFeedback(data) {
     resultsContainer.innerHTML = `<h3>Job Description Feedback:</h3><div class="${className}">${message}</div>`;
 }
 
-function displayFriendlyResumeFeedback(data) {
+function displayFriendlyResumeFeedback(data, resumeName) {
     const resultsContainer = document.getElementById('resultsContainer');
     const feedback = data.feedback;
-    let message = 'Resume looks good. No missing sections.';
+    let message = `Resume '${resumeName}' looks good. No missing sections.`;
     let className = 'alert alert-success';
 
     if (feedback && feedback.length > 0) {
-        message = 'Feedback: ' + feedback.join(', ') + '.';
+        message = `Feedback for '${resumeName}': ` + feedback.join(', ') + '.';
         className = 'alert alert-danger';
     }
 
+    // Append the result to the results container
     resultsContainer.innerHTML += `<h3>Resume Feedback:</h3><div class="${className}">${message}</div>`;
 }
 
