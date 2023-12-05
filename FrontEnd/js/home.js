@@ -131,6 +131,93 @@ function getSimilarityColor(similarity) {
     return 'text-danger';
 }
 
+function getResFeedback() {
+    // Prepare FormData with resume
+    const formData = new FormData();
+    const resumeFiles = document.getElementById('resume').files;
+    if (resumeFiles.length === 0) {
+        alert('Please upload a resume.');
+        return;
+    }
+    formData.append('resume', resumeFiles[0]);  // Assuming only one resume
+
+    // Send request to Flask for Resume Feedback
+    fetch('http://127.0.0.1:5000/resume-feedback', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        displayFriendlyResumeFeedback(data);
+    })
+    .catch(error => {
+        document.getElementById('errorMessage').style.display = 'block';
+        document.getElementById('errorMessage').textContent = 'Error: ' + error;
+    });
+}
+
+function getJobDesFeedback() {
+    // Get Job Description text
+    const jobDescription = document.getElementById('jobDescription').value;
+    if (jobDescription.trim() === '') {
+        alert('Please enter a job description.');
+        return;
+    }
+
+    // Prepare FormData with job description
+    const formData = new FormData();
+    formData.append('job_description', jobDescription);
+
+    // Send request to Flask for Job Description Analysis
+    fetch('http://127.0.0.1:5000/job-description-analysis', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        displayFriendlyJobDescFeedback(data);
+    })
+    .catch(error => {
+        document.getElementById('errorMessage').style.display = 'block';
+        document.getElementById('errorMessage').textContent = 'Error: ' + error;
+    });
+}
+
+function displayFriendlyJobDescFeedback(data) {
+    const resultsContainer = document.getElementById('resultsContainer');
+    let message = 'All key sections were found in the job description.';
+    let className = 'alert alert-success';
+
+    const missing = [];
+    for (const key in data) {
+        if (data[key] === 'Not found') {
+            missing.push(key.replace('_', ' '));
+        }
+    }
+
+    if (missing.length > 0) {
+        message = 'Missing sections: ' + missing.join(', ') + '.';
+        className = 'alert alert-danger';
+    }
+
+    resultsContainer.innerHTML = `<h3>Job Description Feedback:</h3><div class="${className}">${message}</div>`;
+}
+
+function displayFriendlyResumeFeedback(data) {
+    const resultsContainer = document.getElementById('resultsContainer');
+    const feedback = data.feedback;
+    let message = 'Resume looks good. No missing sections.';
+    let className = 'alert alert-success';
+
+    if (feedback && feedback.length > 0) {
+        message = 'Feedback: ' + feedback.join(', ') + '.';
+        className = 'alert alert-danger';
+    }
+
+    resultsContainer.innerHTML += `<h3>Resume Feedback:</h3><div class="${className}">${message}</div>`;
+}
+
+
 function goLogin() {
     const choice = confirm("Are you sure you want to logout?");
     if (choice) window.location.href = 'Login.html';
