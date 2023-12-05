@@ -68,7 +68,7 @@ function submitForm() {
         sendDataToServer(jobDescription, resume);
     });
 
-    resumes = [];
+    clearInputs();
 }
 
 function sendDataToServer(jobDescription, resume) {
@@ -85,9 +85,9 @@ function sendDataToServer(jobDescription, resume) {
     formData.append('job_description', jobDescription);
     formData.append('resume', resume);
 
-    
 
-    fetch('http://127.0.0.1:5000/upload', {
+
+    fetch('http://germanrandhawa1.pythonanywhere.com/upload', {
         method: 'POST',
         body: formData
     })
@@ -176,7 +176,7 @@ function getResFeedback() {
         const formData = new FormData();
         formData.append('resume', resume);
 
-        fetch('http://127.0.0.1:5000/resume-feedback', {
+        fetch('http://germanrandhawa1.pythonanywhere.com/resume-feedback', {
             method: 'POST',
             body: formData
         })
@@ -204,6 +204,7 @@ function getResFeedback() {
             document.getElementById('errorMessage').textContent = 'Error: ' + error.message;
         });
     });
+    clearInputs();
 }
 
 function getJobDesFeedback() {
@@ -219,7 +220,7 @@ function getJobDesFeedback() {
     formData.append('job_description', jobDescription);
 
     // Send request to Flask for Job Description Analysis
-    fetch('http://127.0.0.1:5000/job-description-analysis', {
+    fetch('http://germanrandhawa1.pythonanywhere.com/job-description-analysis', {
         method: 'POST',
         body: formData
     })
@@ -272,7 +273,7 @@ function displayFriendlyResumeFeedback(data, resumeName) {
     }
 
     // Append the result to the results container
-    resultsContainer.innerHTML += `<h3>Resume Feedback:</h3><div class="${className}">${message}</div>`;
+    resultsContainer.innerHTML = `<h3>Resume Feedback:</h3><div class="${className}">${message}</div>`;
 }
 
 
@@ -280,6 +281,16 @@ function goLogin() {
     const choice = confirm("Are you sure you want to logout?");
     if (choice) window.location.href = 'Login.html';
 }
+
+function clearInputs() {
+    // Clear the job description textarea
+    document.getElementById('jobDescription').value = '';
+
+    // Clear the added resumes display and the resumes array
+    document.getElementById('addedResumes').innerHTML = '';
+    resumes = [];
+}
+
 
 document.addEventListener('DOMContentLoaded', () => {
     const corporateSecretLink = document.getElementById('corporateSecretLink');

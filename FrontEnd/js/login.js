@@ -21,12 +21,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const { message, role } = await response.json();
                 localStorage.setItem('username', username);
                 window.location.href = 'home.html';
-                // Check the role of the user
-                // if (role === 'admin') {
-                //     window.location.href = 'admin.html';
-                // } else {
-                //     window.location.href = 'home.html';
-                // }
+               
             } else {
                 console.error('Invalid credentials');
                 alert('Invalid credentials');
