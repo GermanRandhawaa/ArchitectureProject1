@@ -32,6 +32,13 @@ function addResumeToList() {
 
         if (resume.name.endsWith('.docx') && resume.size < 5000000) {
             addResume(resume);
+            fetch(`http://localhost:3000/description-analysis/${localStorage.getItem('username')}`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                credentials: 'include',
+            });
             addedResumesDiv.innerHTML += `<p>${resume.name}</p>`;
             hasValidFiles = true;
         } else {
@@ -183,6 +190,14 @@ function getResFeedback() {
             displayFriendlyResumeFeedback(data, resume.name);
             // Optionally, clear the resumes array if feedback should only be fetched once
             // resumes = [];
+
+            fetch(`http://localhost:3000/resume-feedback/${localStorage.getItem('username')}`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                credentials: 'include',
+            });
         })
         .catch(error => {
             document.getElementById('errorMessage').style.display = 'block';
@@ -211,6 +226,13 @@ function getJobDesFeedback() {
     .then(response => response.json())
     .then(data => {
         displayFriendlyJobDescFeedback(data);
+        fetch(`http://localhost:3000/job-feedback/${localStorage.getItem('username')}`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                credentials: 'include',
+            });
     })
     .catch(error => {
         document.getElementById('errorMessage').style.display = 'block';
