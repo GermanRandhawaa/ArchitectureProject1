@@ -158,6 +158,23 @@ app.post("/register", async (req, res) => {
   }
 });
 
+const getAllUserInfos = (req, res) => {
+  const query = "SELECT username, email, role FROM users";
+  connection.query(query, (error, results) => {
+    if (error) {
+      console.error("Error querying user information:", error);
+      res.status(500).json({ message: "Error querying user information" });
+    } else {
+      // Send user information as a JSON response
+      res.json(results);
+    }
+  });
+};
+
+app.get("/get-all-users", getAllUserInfos);
+
+
+
 app.listen(port, () => {
   console.log(`app listening at http://localhost:${port}`);
 });

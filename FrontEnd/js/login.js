@@ -19,13 +19,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (response.ok) {
                 const { message, role } = await response.json();
-                // window.location.href = 'home.html';
+                window.location.href = 'home.html';
                 // Check the role of the user
-                if (role === 'admin') {
-                    window.location.href = 'admin.html';
-                } else {
-                    window.location.href = 'home.html';
-                }
+                // if (role === 'admin') {
+                //     window.location.href = 'admin.html';
+                // } else {
+                //     window.location.href = 'home.html';
+                // }
             } else {
                 console.error('Invalid credentials');
                 alert('Invalid credentials');

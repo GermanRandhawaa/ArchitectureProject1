@@ -2,14 +2,23 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>User Information</title>
+  <link rel="stylesheet" href="./style/admin.css">
 </head>
 <body>
   <h1>User Information</h1>
-  <ul id="userList">
-    <!-- User information will be inserted here dynamically -->
-  </ul>
+  <table>
+    <thead>
+      <tr>
+        <th>Username</th>
+        <th>Email</th>
+        <th>Role</th>
+      </tr>
+    </thead>
+    <tbody id="userTableBody"></tbody>
+  </table>
+  <a href="./home.html" class="back-button">Back</a>
+  <script src="./js/admin.js"></script>
 </body>
 </html>

@@ -135,3 +135,41 @@ function goLogin() {
     const choice = confirm("Are you sure you want to logout?");
     if (choice) window.location.href = 'Login.html';
 }
+
+document.addEventListener('DOMContentLoaded', () => {
+    const corporateSecretLink = document.getElementById('corporateSecretLink');
+
+    corporateSecretLink.addEventListener('click', async (event) => {
+        event.preventDefault();
+
+        const username = prompt('Enter your username:');
+        const password = prompt('Enter your password:');
+
+        try {
+            const response = await fetch('http://localhost:3000/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ username, password }),
+                credentials: 'include',
+            });
+
+            if (response.ok) {
+                const { role } = await response.json();
+                // Check the role of the user
+                if (role === 'admin') {
+                    window.location.href = 'admin.html';
+                } else {
+                    window.location.href = 'home.html';
+                }
+            } else {
+                console.error('Invalid credentials');
+                alert('Invalid credentials');
+                // Show an error message to the user or perform any other action
+            }
+        } catch (error) {
+            console.error('Error:', error);
+        }
+    });
+});
