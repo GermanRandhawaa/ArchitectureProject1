@@ -11,6 +11,8 @@ const port = process.env.PORT || 3000;
 const secretKey = process.env.SECRET_KEY;
 const config = require('./config');
 const app = express();
+const swaggerJSDoc = require("swagger-jsdoc");
+const swaggerUi = require("swagger-ui-express");
 
 app.use(express.static(__dirname));
 
@@ -25,6 +27,20 @@ app.use(helmet());
 app.use(express.urlencoded({ extended: true }));
 
 const connection = mysql.createConnection(process.env.DATABASE_URL);
+const swaggerOptions = {
+  definition: {
+    openapi: "3.0.0",
+    info: {
+      title: "Resume Parser App",
+      version: "1.0.0",
+      description: "Amir LAB",
+    },
+  },
+  apis: ["server.js"], // Add the filename of your Express.js application
+};
+
+const swaggerSpec = swaggerJSDoc(swaggerOptions);
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 const verifyToken = (req, res, next) => {
   const token = req.cookies.jwt;
@@ -53,6 +69,41 @@ app.get("/index", verifyToken, (req, res) => {
 
 const userApiCallCounts = {};
 
+/**
+ * @swagger
+ * /login:
+ *   post:
+ *     summary: User login endpoint
+ *     description: Authenticates a user and returns a JWT token
+ *     tags:
+ *       - Authentication
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               username:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Successful login
+ *         content:
+ *           application/json:
+ *             example:
+ *               message: Login successful
+ *               role: user
+ *               apiCallCount: 1
+ *       401:
+ *         description: Invalid credentials
+ *         content:
+ *           application/json:
+ *             example:
+ *               message: Invalid credentials
+ */
 app.post("/login", async (req, res) => {
   const { username, password } = req.body;
 
@@ -149,6 +200,42 @@ app.post("/login", async (req, res) => {
   });
 });
 
+/**
+ * @swagger
+ * /register:
+ *   post:
+ *     summary: User registration endpoint
+ *     description: Registers a new user and returns a success message
+ *     tags:
+ *       - Authentication
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               username:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: User registered successfully
+ *         content:
+ *           application/json:
+ *             example:
+ *               message: User registered successfully
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             example:
+ *               message: Error registering user
+ *               error: <error_message>
+ */
 app.post("/register", async (req, res) => {
   const { username, email, password } = req.body;
 
@@ -215,8 +302,100 @@ const getAllUserEp = (req, res) => {
   });
 };
 
+/**
+ * @swagger
+ * /get-all-users:
+ *   get:
+ *     summary: Get all user information
+ *     description: Retrieves information about all registered users
+ *     tags:
+ *       - Users
+ *     responses:
+ *       200:
+ *         description: Successful retrieval of user information
+ *         content:
+ *           application/json:
+ *             example:
+ *               - username: user1
+ *                 email: user1@example.com
+ *               - username: user2
+ *                 email: user2@example.com
+ *               # ... (more users)
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             example:
+ *               message: Error querying user information
+ */
 app.get("/get-all-users", getAllUserInfos);
+
+/**
+ * @swagger
+ * /get-calls:
+ *   get:
+ *     summary: Get all user API call information
+ *     description: Retrieves information about API calls made by users
+ *     tags:
+ *       - Users
+ *     responses:
+ *       200:
+ *         description: Successful retrieval of user API call information
+ *         content:
+ *           application/json:
+ *             example:
+ *               - username: user1
+ *                 api_calls: 10
+ *               - username: user2
+ *                 api_calls: 5
+ *               # ... (more users)
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             example:
+ *               message: Error querying user information
+ */
 app.get("/get-calls", getAllUserCalls);
+
+/**
+ * @swagger
+ * /get-ep:
+ *   get:
+ *     summary: Get all user endpoint information
+ *     description: Retrieves information about user endpoints
+ *     tags:
+ *       - Users
+ *     responses:
+ *       200:
+ *         description: Successful retrieval of user endpoint information
+ *         content:
+ *           application/json:
+ *             example:
+ *               - username: user1
+ *                 descAnalysis: 5
+ *                 resumeFeedback: 3
+ *                 jobFeedback: 2
+ *                 calls: 10
+ *                 login: 5
+ *                 userinfos: 8
+ *                 deleteCount: 1
+ *               - username: user2
+ *                 descAnalysis: 2
+ *                 resumeFeedback: 1
+ *                 jobFeedback: 0
+ *                 calls: 5
+ *                 login: 2
+ *                 userinfos: 3
+ *                 deleteCount: 0
+ *               # ... (more users)
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             example:
+ *               message: Error querying user information
+ */
 app.get("/get-ep", getAllUserEp);
 
 const deleteUser = (req, res) => {
@@ -241,9 +420,73 @@ const deleteUser = (req, res) => {
   });
 };
 
-// Endpoint to delete a user (no authorization required)
+/**
+ * @swagger
+ * /users/{username}:
+ *   delete:
+ *     summary: Delete a user
+ *     description: Deletes a user based on the provided username
+ *     tags:
+ *       - Users
+ *     parameters:
+ *       - in: path
+ *         name: username
+ *         required: true
+ *         description: The username of the user to be deleted
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: User deleted successfully
+ *         content:
+ *           application/json:
+ *             example:
+ *               message: User deleted successfully
+ *       404:
+ *         description: User not found
+ *         content:
+ *           application/json:
+ *             example:
+ *               message: User not found
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             example:
+ *               message: Error deleting user
+ */
 app.delete("/users/:username", deleteUser);
 
+
+/**
+ * @swagger
+ * /incrementCount/{username}:
+ *   patch:
+ *     summary: Increment API call count for a user
+ *     description: Increments the API call count for the specified user
+ *     tags:
+ *       - Users
+ *     parameters:
+ *       - in: path
+ *         name: username
+ *         required: true
+ *         description: The username for which to increment the API call count
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: API call count incremented successfully
+ *         content:
+ *           application/json:
+ *             example:
+ *               count: 6
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             example:
+ *               message: Error updating API call count
+ */
 app.patch("/incrementCount/:username", async (req, res) => {
   const { username } = req.params;
   const countQuery = "SELECT api_calls FROM calls WHERE username = ?";
@@ -265,6 +508,35 @@ app.patch("/incrementCount/:username", async (req, res) => {
   });
 });
 
+/**
+ * @swagger
+ * /apiCallCount/{username}:
+ *   get:
+ *     summary: Get API call count for a user
+ *     description: Retrieves the API call count for the specified user
+ *     tags:
+ *       - Users
+ *     parameters:
+ *       - in: path
+ *         name: username
+ *         required: true
+ *         description: The username for which to retrieve the API call count
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Successful retrieval of API call count
+ *         content:
+ *           application/json:
+ *             example:
+ *               count: 5
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             example:
+ *               message: Error querying API call count
+ */
 app.get("/apiCallCount/:username", (req, res) => {
   const { username } = req.params;
   const countQuery = "SELECT api_calls FROM calls WHERE username = ?";
@@ -282,6 +554,35 @@ app.get("/apiCallCount/:username", (req, res) => {
   });
 });
 
+/**
+ * @swagger
+ * /description-analysis/{username}:
+ *   patch:
+ *     summary: Increment description analysis count for a user
+ *     description: Increments the description analysis count for the specified user
+ *     tags:
+ *       - Users
+ *     parameters:
+ *       - in: path
+ *         name: username
+ *         required: true
+ *         description: The username for which to increment the description analysis count
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Description analysis count incremented successfully
+ *         content:
+ *           application/json:
+ *             example:
+ *               message: Column updated successfully
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             example:
+ *               error: Error updating description analysis count
+ */
 app.patch("/description-analysis/:username", (req, res) => {
   const { username } = req.params;
   const updateQuery =
@@ -349,6 +650,35 @@ function login_counter(username) {
   });
 };
 
+/**
+ * @swagger
+ * /userinfos/{username}:
+ *   patch:
+ *     summary: Increment userinfos count for a user
+ *     description: Increments the userinfos count for the specified user
+ *     tags:
+ *       - Users
+ *     parameters:
+ *       - in: path
+ *         name: username
+ *         required: true
+ *         description: The username for which to increment the userinfos count
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Userinfos count incremented successfully
+ *         content:
+ *           application/json:
+ *             example:
+ *               message: Column updated successfully
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             example:
+ *               error: Error updating userinfos count
+ */
 app.patch("/userinfos/:username", (req, res) => {
   const { username } = req.params;
   const updateQuery =
