@@ -9,14 +9,8 @@ const jwt = require("jsonwebtoken");
 const helmet = require("helmet");
 const port = process.env.PORT || 3000;
 const secretKey = process.env.SECRET_KEY;
-
+const config = require('./config');
 const app = express();
-const fs = require("fs");
-const path = require("path");
-// app.use(express.static(path.join(__dirname, "../Frontend")));
-// app.get("/admin.html", function (req, res) {
-//   res.sendFile(path.join(__dirname, "../Frontend/admin.html"));
-// });
 
 app.use(express.static(__dirname));
 
@@ -49,19 +43,12 @@ const verifyToken = (req, res, next) => {
   }
 };
 
-// const connection = mysql.createConnection({
-//   host: "localhost",
-//   user: "root",
-//   password: "",
-//   database: "archPRoject1",
-// });
-
 if (connection) {
-  console.log("Connected to database");
+  console.log(config.db.connected);
 }
 
 app.get("/index", verifyToken, (req, res) => {
-  res.send("Hello World");
+  res.send("$$$$");
 });
 
 const userApiCallCounts = {};
@@ -79,7 +66,7 @@ app.post("/login", async (req, res) => {
         console.log(err);
       }
     } else {
-      console.log("No token found in cookies");
+      console.log(config.token);
     }
   } catch (error) {
     console.error("Error:", error);
@@ -88,8 +75,8 @@ app.post("/login", async (req, res) => {
   const query = "SELECT * FROM users WHERE username = ?";
   connection.query(query, [username], async (error, results) => {
     if (error) {
-      console.error("Error querying database:", error);
-      res.status(500).json({ message: "Error querying database" });
+      console.error(config.db.err, error);
+      res.status(500).json({ message: config.db.err });
     } else {
       // Increment the API call count for the specific user
       userApiCallCounts[username] = (userApiCallCounts[username] || 0) + 1;
@@ -106,7 +93,7 @@ app.post("/login", async (req, res) => {
           connection.query(updateQuery, [username], (updateError) => {
             if (updateError) {
               console.error("Error updating api_calls:", updateError);
-              res.status(500).json({ message: "Error updating api_calls" });
+              res.status(500).json({ message: config.api });
             } else {
               const token = jwt.sign({ username, role }, secretKey, {
                 expiresIn: "1h",
@@ -120,7 +107,7 @@ app.post("/login", async (req, res) => {
 
               // Send the user's role along with the successful login message
               res.json({
-                message: "Login successful",
+                message: config.db.login,
                 role,
                 apiCallCount: userApiCallCounts[username],
               });
@@ -131,8 +118,8 @@ app.post("/login", async (req, res) => {
             [username],
             (error, results) => {
               if (error) {
-                console.error("Error checking username existence:", error);
-                res.status(500).json({ error: "Internal server error" });
+                console.error(config.db.username, error);
+                res.status(500).json({ error: config.server });
               } else if (results.length === 0) {
                 // Username not found, initialize with a value of 1
                 connection.query(
@@ -141,7 +128,7 @@ app.post("/login", async (req, res) => {
                   (insertError) => {
                     if (insertError) {
                       console.error(
-                        "Error initializing username:",
+                        config.db.username,
                         insertError
                       );
                     } 
@@ -153,10 +140,10 @@ app.post("/login", async (req, res) => {
             }
           );
         } else {
-          res.status(401).json({ message: "Invalid credentials" });
+          res.status(401).json({ message: config.db.credentials });
         }
       } else {
-        res.status(401).json({ message: "Invalid credentials" });
+        res.status(401).json({ message: config.db.credentials });
       }
     }
   });
@@ -174,18 +161,18 @@ app.post("/register", async (req, res) => {
       [username, email, hashedPassword, "user"],
       (error, results) => {
         if (error) {
-          console.error("Error registering user:", error);
+          console.error(config.db.register_err, error);
           res
             .status(500)
-            .json({ message: "Error registering user", error: error.message });
+            .json({ message: config.db.register_err, error: error.message });
         } else {
-          res.status(201).json({ message: "User registered successfully" });
+          res.status(201).json({ message: config.db.register });
         }
       }
     );
   } catch (error) {
     console.error("Error:", error);
-    res.status(500).json({ message: "Error registering user" });
+    res.status(500).json({ message: config.db.register_err });
   }
 });
 
@@ -206,8 +193,8 @@ const getAllUserCalls = (req, res) => {
   const query = "SELECT * FROM calls";
   connection.query(query, (error, results) => {
     if (error) {
-      console.error("Error querying user information:", error);
-      res.status(500).json({ message: "Error querying user information" });
+      console.error(config.user_info, error);
+      res.status(500).json({ message: config.user_info });
     } else {
       // Send user information as a JSON response
       res.json(results);
@@ -219,8 +206,8 @@ const getAllUserEp = (req, res) => {
   const query = "SELECT * FROM epcounter";
   connection.query(query, (error, results) => {
     if (error) {
-      console.error("Error querying user information:", error);
-      res.status(500).json({ message: "Error querying user information" });
+      console.error(config.user_info, error);
+      res.status(500).json({ message: config.user_info });
     } else {
       // Send user information as a JSON response
       res.json(results);
@@ -263,8 +250,8 @@ app.patch("/incrementCount/:username", async (req, res) => {
   let count = 0;
   connection.query(countQuery, [username], (error, results) => {
     if (error) {
-      console.error("Error querying api_calls:", error);
-      res.status(500).json({ message: "Error querying api_calls" });
+      console.error(config.db.err, error);
+      res.status(500).json({ message: config.db.err });
     } else {
       count = results[0];
       res.json({ count });
@@ -273,7 +260,7 @@ app.patch("/incrementCount/:username", async (req, res) => {
   const updateQuery = "UPDATE calls SET api_calls = ? WHERE username = ?";
   connection.query(updateQuery, [count + 1, username], (error) => {
     if (error) {
-      console.error("Error updating api_calls:", error);
+      console.error(config.db.err, error);
     }
   });
 });
@@ -283,8 +270,8 @@ app.get("/apiCallCount/:username", (req, res) => {
   const countQuery = "SELECT api_calls FROM calls WHERE username = ?";
   connection.query(countQuery, [username], (error, results) => {
     if (error) {
-      console.error("Error querying api_calls:", error);
-      res.status(500).json({ message: "Error querying api_calls" });
+      console.error(config.db.err, error);
+      res.status(500).json({ message: config.db.err });
     } else {
       console.log("counts fetched");
       calls_counter(username);
@@ -302,10 +289,10 @@ app.patch("/description-analysis/:username", (req, res) => {
 
   connection.query(updateQuery, [username], (updateError) => {
     if (updateError) {
-      console.error("Error updating descAnalysis:", updateError);
-      res.status(500).json({ error: "Error updating descAnalysis" });
+      console.error(config.description, updateError);
+      res.status(500).json({ error: config.description });
     } else {
-      res.json({ message: "Column updated successfully" });
+      res.json({ message: config.updateSuccess });
     }
   });
 });
@@ -317,10 +304,10 @@ app.patch("/resume-feedback/:username", (req, res) => {
 
   connection.query(updateQuery, [username], (updateError) => {
     if (updateError) {
-      console.error("Error updating descAnalysis:", updateError);
-      res.status(500).json({ error: "Error updating resumeFeedback" });
+      console.error(config["resume-feedback"], updateError);
+      res.status(500).json({ error: config["resume-feedback"] });
     } else {
-      res.json({ message: "Column updated successfully" });
+      res.json({ message: config.updateSuccess });
     }
   });
 });
@@ -332,10 +319,10 @@ app.patch("/job-feedback/:username", (req, res) => {
 
   connection.query(updateQuery, [username], (updateError) => {
     if (updateError) {
-      console.error("Error updating jobFeedback:", updateError);
-      res.status(500).json({ error: "Error updating jobFeedback" });
+      console.error(config["job-feedback"], updateError);
+      res.status(500).json({ error: config["job-feedback"] });
     } else {
-      res.json({ message: "Column updated successfully" });
+      res.json({ message: config.updateSuccess });
     }
   });
 });
@@ -346,7 +333,7 @@ function calls_counter(username){
 
   connection.query(updateQuery, [username], (updateError) => {
     if (updateError) {
-      console.error("Error updating calls:", updateError);
+      console.error(config.calls_counter, updateError);
     } 
   });
 };
@@ -357,7 +344,7 @@ function login_counter(username) {
 
   connection.query(updateQuery, [username], (updateError) => {
     if (updateError) {
-      console.error("Error updating login:", updateError);
+      console.error(config.login_counter, updateError);
     } 
   });
 };
@@ -369,10 +356,10 @@ app.patch("/userinfos/:username", (req, res) => {
 
   connection.query(updateQuery, [username], (updateError) => {
     if (updateError) {
-      console.error("Error updating userinfos:", updateError);
-      res.status(500).json({ error: "Error updating userinfos" });
+      console.error(config.userinfos, updateError);
+      res.status(500).json({ error: config.userinfos });
     } else {
-      res.json({ message: "Column updated successfully" });
+      res.json({ message: config.updateSuccess });
     }
   });
 })
@@ -383,13 +370,13 @@ function del() {
 
   connection.query(updateQuery, (updateError) => {
     if (updateError) {
-      console.error("Error updating deleteCount:", updateError);
+      console.error(config.delCounter, updateError);
     } 
   });
 }
 
 app.listen(port, () => {
-  console.log(`app listening at http://localhost:${port}`);
+  console.log(config.listen + " " + port);
 });
 
 module.exports = app;
