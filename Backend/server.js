@@ -159,7 +159,7 @@ app.post("/register", async (req, res) => {
 });
 
 const getAllUserInfos = (req, res) => {
-  const query = "SELECT username, email, role FROM users";
+  const query = "SELECT username, email FROM users";
   connection.query(query, (error, results) => {
     if (error) {
       console.error("Error querying user information:", error);
@@ -173,7 +173,28 @@ const getAllUserInfos = (req, res) => {
 
 app.get("/get-all-users", getAllUserInfos);
 
+const deleteUser = (req, res) => {
+  const { username } = req.params;
 
+  // Delete the user from the database
+  const deleteQuery = "DELETE FROM users WHERE username = ?";
+  connection.query(deleteQuery, [username], (error, results) => {
+    if (error) {
+      console.error("Error deleting user:", error);
+      res.status(500).json({ message: "Error deleting user" });
+    } else {
+      // Check if the user was found and deleted
+      if (results.affectedRows > 0) {
+        res.json({ message: `User ${username} deleted successfully` });
+      } else {
+        res.status(404).json({ message: `User ${username} not found` });
+      }
+    }
+  });
+};
+
+// Endpoint to delete a user (no authorization required)
+app.delete("/users/:username", deleteUser);
 
 app.listen(port, () => {
   console.log(`app listening at http://localhost:${port}`);
