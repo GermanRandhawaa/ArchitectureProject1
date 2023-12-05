@@ -80,7 +80,7 @@ function sendDataToServer(jobDescription, resume) {
 
 
 
-    fetch('http://127.0.0.1:5000/upload', {
+    fetch('http://germanrandhawa1.pythonanywhere.com/upload', {
         method: 'POST',
         body: formData
     })
@@ -169,7 +169,7 @@ function getResFeedback() {
         const formData = new FormData();
         formData.append('resume', resume);
 
-        fetch('http://127.0.0.1:5000/resume-feedback', {
+        fetch('http://germanrandhawa1.pythonanywhere.com/resume-feedback', {
             method: 'POST',
             body: formData
         })
@@ -206,7 +206,7 @@ function getJobDesFeedback() {
     formData.append('job_description', jobDescription);
 
     // Send request to Flask for Job Description Analysis
-    fetch('http://127.0.0.1:5000/job-description-analysis', {
+    fetch('http://germanrandhawa1.pythonanywhere.com/job-description-analysis', {
         method: 'POST',
         body: formData
     })
