@@ -19,6 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (response.ok) {
                 const { message, role } = await response.json();
+                localStorage.setItem('username', username);
                 window.location.href = 'home.html';
                 // Check the role of the user
                 // if (role === 'admin') {

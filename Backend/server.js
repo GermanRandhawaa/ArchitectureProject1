@@ -185,6 +185,7 @@ const deleteUser = (req, res) => {
     } else {
       // Check if the user was found and deleted
       if (results.affectedRows > 0) {
+        console.log(`User ${username} deleted successfully`)
         res.json({ message: `User ${username} deleted successfully` });
       } else {
         res.status(404).json({ message: `User ${username} not found` });
@@ -195,6 +196,45 @@ const deleteUser = (req, res) => {
 
 // Endpoint to delete a user (no authorization required)
 app.delete("/users/:username", deleteUser);
+
+
+app.patch("/incrementCount/:username", async (req, res) => { 
+  const { username } = req.params;
+  const countQuery = "SELECT api_calls FROM calls WHERE username = ?";
+  let count = 0;
+  connection.query(countQuery, [username], (error, results) => {
+    if (error) {
+      console.error("Error querying api_calls:", error);
+      res.status(500).json({ message: "Error querying api_calls" });
+    } else {
+      count = results[0];
+      res.json({ count });
+    }
+  });
+  const updateQuery = "UPDATE calls SET api_calls = ? WHERE username = ?";
+   connection.query(updateQuery, [count + 1, username], (error) => {
+    if (error) {
+      console.error("Error updating api_calls:", error);
+    }
+  });
+
+})
+
+app.get("/apiCallCount/:username", (req, res) => {
+  console.log("apiCallCount")
+  const { username } = req.params;
+  const countQuery = "SELECT api_calls FROM calls WHERE username = ?";
+  connection.query(countQuery, [username], (error, results) => {
+    if (error) {
+      console.error("Error querying api_calls:", error);
+      res.status(500).json({ message: "Error querying api_calls" });
+    } else {
+      console.log("counts fetched")
+      const count = results[0];
+      res.json({ "count" : count });
+    }
+  });
+});
 
 app.listen(port, () => {
   console.log(`app listening at http://localhost:${port}`);

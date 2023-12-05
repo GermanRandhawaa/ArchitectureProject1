@@ -2,9 +2,24 @@ let resumes = [];
 let resumeResults = [];
 let apiCallCount = 0;
 
-
+getApiCallCount();
 function addResume(resume) {
     resumes.push(resume);
+}
+
+async function getApiCallCount() {
+    const res = await fetch(`http://localhost:3000/apiCallCount/${localStorage.getItem('username')}`, {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+    })
+    
+    const count = await res.json();
+    apiCallCount = count.count.api_calls;
+    document.getElementById('apiCallCount').textContent = "Your api count is " + apiCallCount;
+
 }
 
 function addResumeToList() {
@@ -50,6 +65,10 @@ function submitForm() {
 }
 
 function sendDataToServer(jobDescription, resume) {
+    if (apiCallCount > 10) {
+        alert('You have exceeded the maximum number of API calls. Please try again later.');
+        return;
+    }
     apiCallCount++; // Increment the counter for each API call
 
     console.log(`API Call Count: ${apiCallCount}`); // Log the API call count
@@ -71,6 +90,13 @@ function sendDataToServer(jobDescription, resume) {
             resumeResults.push({ name: resume.name, similarity: data.similarity });
             displayResults();
             document.getElementById('errorMessage').style.display = 'none';
+            fetch(`http://localhost:3000/incrementCount/${localStorage.getItem('username')}`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                credentials: 'include',
+            });
         })
         .catch(error => {
             console.error('Error:', error);
